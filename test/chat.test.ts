@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import { handleChat } from "../src/chat";
-import { chatRequest, FakeModel, freshDay, validBody } from "./helpers";
+import { chatRequest, envWith, FakeModel, freshDay, validBody } from "./helpers";
 
 describe("handleChat — separated instructions", () => {
   it("returns the model reply", async () => {
@@ -167,19 +167,145 @@ describe("handleChat — limits", () => {
 
     expect(await response.json()).toMatchObject({ remaining: 2 });
   });
+});
+
+const REFUSAL = "Solo puedo responder preguntas sobre el perfil profesional de Jordi.";
+
+async function metric(now: Date, name: string): Promise<number> {
+  const row = await env.DB.prepare("SELECT count FROM metrics WHERE day = ?1 AND name = ?2")
+    .bind(now.toISOString().slice(0, 10), name)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+async function exchangeOf(conversationId: string): Promise<Record<string, unknown> | null> {
+  return env.DB.prepare("SELECT * FROM exchanges WHERE conversation_id = ?1").bind(conversationId).first();
+}
+
+// Wraps the real database and fails only for statements containing the given text.
+function failingOn(fragment: string): D1Database {
+  return {
+    prepare(sql: string) {
+      if (sql.includes(fragment)) throw new Error("D1 down");
+      return env.DB.prepare(sql);
+    },
+  } as unknown as D1Database;
+}
+
+describe("handleChat — output filter and logging", () => {
+  it.each([
+    ["verbatim", "El código interno es ZX-CANARYTEST0000."],
+    ["spaced out", "Z X - C A N A R Y T E S T 0 0 0 0"],
+  ])("replaces a reply that leaks the canary %s with the fixed refusal", async (_name, leak) => {
+    const now = freshDay();
+    const conversationId = crypto.randomUUID();
+
+    const response = await handleChat(chatRequest(validBody({ conversationId })), env, new FakeModel(leak), now);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ reply: REFUSAL });
+    expect(await exchangeOf(conversationId)).toMatchObject({ kind: "canary", model_reply: leak });
+    expect(await metric(now, "canary_hits")).toBe(1);
+  });
+
+  it("stores a normal exchange as ok", async () => {
+    const now = freshDay();
+    const conversationId = crypto.randomUUID();
+
+    await handleChat(chatRequest(validBody({ conversationId, message: "¿Qué stack usa?" })), env, new FakeModel(), now);
+
+    expect(await exchangeOf(conversationId)).toMatchObject({
+      kind: "ok",
+      created_at: now.toISOString(),
+      user_message: "¿Qué stack usa?",
+      model_reply: "Jordi trabaja con Java.",
+    });
+  });
+
+  it("stores a refusal as refused", async () => {
+    const conversationId = crypto.randomUUID();
+
+    await handleChat(chatRequest(validBody({ conversationId })), env, new FakeModel(REFUSAL), freshDay());
+
+    expect(await exchangeOf(conversationId)).toMatchObject({ kind: "refused" });
+  });
+
+  it("cuts a reply to 2000 characters so it still fits in the next request's history", async () => {
+    const response = await handleChat(chatRequest(validBody()), env, new FakeModel("a".repeat(3000)), freshDay());
+
+    const { reply } = (await response.json()) as { reply: string };
+    expect(reply).toHaveLength(2000);
+  });
+
+  it("answers 502 and counts it when the model fails", async () => {
+    const now = freshDay();
+
+    const response = await handleChat(chatRequest(validBody()), env, new FakeModel(new Error("boom")), now);
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ error: "model_error" });
+    expect(await metric(now, "model_errors")).toBe(1);
+  });
+
+  it.each(["", "   \n"])("answers 502 and stores nothing when the model replies %j", async (empty) => {
+    const now = freshDay();
+    const conversationId = crypto.randomUUID();
+
+    const response = await handleChat(chatRequest(validBody({ conversationId })), env, new FakeModel(empty), now);
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ error: "model_error" });
+    expect(await exchangeOf(conversationId)).toBeNull();
+    expect(await metric(now, "model_errors")).toBe(1);
+  });
+
+  it("counts rejected requests by reason", async () => {
+    const now = freshDay();
+
+    await handleChat(chatRequest("hola"), env, new FakeModel(), now);
+    await handleChat(chatRequest(validBody(), { Origin: "https://evil.example" }), env, new FakeModel(), now);
+
+    expect(await metric(now, "rejected_invalid")).toBe(1);
+    expect(await metric(now, "rejected_origin")).toBe(1);
+  });
+
+  it("counts visitors and days that hit their limit", async () => {
+    const now = freshDay();
+    for (let i = 0; i < 4; i++) await handleChat(chatRequest(validBody()), env, new FakeModel(), now);
+
+    expect(await metric(now, "limited_visitor")).toBe(1);
+  });
+});
+
+describe("handleChat — failing closed", () => {
+  it.each([
+    ["an empty canary", { CANARY: "" }],
+    ["a canary that is too short", { CANARY: "ZX-1" }],
+    ["a missing salt", { VISITOR_SALT: "" }],
+  ])("answers 500 and never calls the model with %s", async (_name, override) => {
+    const model = new FakeModel();
+
+    const response = await handleChat(chatRequest(validBody()), envWith(override), model, freshDay());
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "server_misconfigured" });
+    expect(model.calls).toHaveLength(0);
+  });
 
   it("never calls the model when the limits cannot be checked", async () => {
     const model = new FakeModel();
-    const brokenDb = {
-      prepare() {
-        throw new Error("D1 unavailable");
-      },
-    } as unknown as D1Database;
+    const brokenEnv = envWith({ DB: failingOn("rate_limit") });
 
-    await expect(
-      handleChat(chatRequest(validBody()), { ...env, DB: brokenDb }, model, freshDay()),
-    ).rejects.toThrow();
-
+    await expect(handleChat(chatRequest(validBody()), brokenEnv, model, freshDay())).rejects.toThrow("D1 down");
     expect(model.calls).toHaveLength(0);
+  });
+
+  it("still answers the visitor when saving the exchange fails", async () => {
+    const brokenEnv = envWith({ DB: failingOn("INSERT INTO exchanges") });
+
+    const response = await handleChat(chatRequest(validBody()), brokenEnv, new FakeModel(), freshDay());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ reply: "Jordi trabaja con Java." });
   });
 });

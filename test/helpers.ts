@@ -1,3 +1,4 @@
+import { env } from "cloudflare:workers";
 import type { ModelProvider } from "../src/model";
 import type { ChatMessage } from "../src/types";
 
@@ -40,4 +41,19 @@ export function chatRequest(body: unknown, headers: Record<string, string> = {})
     },
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
+}
+
+// Builds an environment with some bindings replaced. Bindings are copied one by one
+// because the test environment object is not guaranteed to survive a spread.
+export function envWith(override: Partial<Env>): Env {
+  return {
+    AI: env.AI,
+    DB: env.DB,
+    CANARY: env.CANARY,
+    VISITOR_SALT: env.VISITOR_SALT,
+    ALLOWED_ORIGINS: env.ALLOWED_ORIGINS,
+    VISITOR_DAILY_LIMIT: env.VISITOR_DAILY_LIMIT,
+    GLOBAL_DAILY_LIMIT: env.GLOBAL_DAILY_LIMIT,
+    ...override,
+  } as Env;
 }

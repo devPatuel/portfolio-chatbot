@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import worker from "../src/index";
-import { ORIGIN } from "./helpers";
+import { envWith, ORIGIN } from "./helpers";
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
@@ -31,5 +31,27 @@ describe("routing", () => {
     const response = await call("/chat", { method: "OPTIONS", headers: { Origin: "https://evil.example" } });
     expect(response.status).toBe(403);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
+  it("turns an unexpected failure into a 500 without leaking details", async () => {
+    const brokenDb = {
+      prepare() {
+        throw new Error("D1 down");
+      },
+    } as unknown as D1Database;
+    const request = new IncomingRequest("https://chat.test/chat", {
+      method: "POST",
+      headers: { Origin: ORIGIN, "CF-Connecting-IP": "203.0.113.7" },
+      body: JSON.stringify({
+        conversationId: "3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b",
+        message: "Hola",
+        history: [],
+      }),
+    });
+
+    const response = await worker.fetch(request, envWith({ DB: brokenDb }));
+
+    expect(response.status).toBe(500);
+    expect(await response.text()).toBe('{"error":"internal_error"}');
   });
 });

@@ -1,4 +1,5 @@
 import { handleChat } from "./chat";
+import { cleanup } from "./cleanup";
 import { CONFIG } from "./config";
 import { json } from "./http";
 import { WorkersAiProvider } from "./model";
@@ -20,7 +21,17 @@ export default {
 
     if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-    const model = new WorkersAiProvider(env.AI, CONFIG.model, CONFIG.maxOutputTokens);
-    return handleChat(request, env, model, new Date());
+    try {
+      const model = new WorkersAiProvider(env.AI, CONFIG.model, CONFIG.maxOutputTokens);
+      return await handleChat(request, env, model, new Date());
+    } catch (error) {
+      // Details go to the logs, never to the caller.
+      console.error("unhandled error", error);
+      return json({ error: "internal_error" }, 500);
+    }
+  },
+
+  async scheduled(_controller, env): Promise<void> {
+    await cleanup(env.DB, new Date(), CONFIG.exchangeRetentionDays);
   },
 } satisfies ExportedHandler<Env>;
