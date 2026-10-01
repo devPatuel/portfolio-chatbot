@@ -269,7 +269,7 @@ describe("handleChat — output filter and logging", () => {
     expect(await metric(now, "rejected_origin")).toBe(1);
   });
 
-  it("counts visitors and days that hit their limit", async () => {
+  it("counts requests rejected by the visitor limit", async () => {
     const now = freshDay();
     for (let i = 0; i < 4; i++) await handleChat(chatRequest(validBody()), env, new FakeModel(), now);
 

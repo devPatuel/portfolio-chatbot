@@ -12,11 +12,16 @@ import { validateChatRequest } from "./validate";
 import { dayOf, visitorId } from "./visitor";
 
 // A counter that fails to update must never change the response.
+// Log only the message: provider errors can carry request details we do not want in logs.
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "unknown";
+}
+
 async function count(env: Env, day: string, name: MetricName): Promise<void> {
   try {
     await bumpMetric(env.DB, day, name);
   } catch (error) {
-    console.error("metric failed", name, error);
+    console.error("metric failed", name, errorMessage(error));
   }
 }
 
@@ -72,7 +77,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
     // An empty reply is a failed generation, not something to show or store as an answer.
     if (!raw.trim()) throw new Error("empty model reply");
   } catch (error) {
-    console.error("model failed", error);
+    console.error("model failed", errorMessage(error));
     await count(env, day, "model_errors");
     return json({ error: "model_error" }, 502, cors);
   }
@@ -93,7 +98,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
       modelReply: raw,
     });
   } catch (error) {
-    console.error("exchange log failed", error);
+    console.error("exchange log failed", errorMessage(error));
   }
 
   return json({ reply, remaining: limit.remaining }, 200, cors);
