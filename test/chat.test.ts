@@ -71,3 +71,43 @@ describe("handleChat — input validation", () => {
     expect(model.calls).toHaveLength(0);
   });
 });
+
+describe("handleChat — origin", () => {
+  it.each([
+    ["a foreign origin", { Origin: "https://evil.example" }],
+    ["a look-alike origin", { Origin: "https://jordipatuel.com.evil.example" }],
+  ])("rejects %s with 403 and never calls the model", async (_name, headers) => {
+    const model = new FakeModel();
+
+    const response = await handleChat(chatRequest(validBody(), headers), env, model, freshDay());
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "forbidden_origin" });
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBeNull();
+    expect(model.calls).toHaveLength(0);
+  });
+
+  it("rejects a request without an Origin header", async () => {
+    const model = new FakeModel();
+    const request = new Request("https://chat.test/chat", { method: "POST", body: JSON.stringify(validBody()) });
+
+    const response = await handleChat(request, env, model, freshDay());
+
+    expect(response.status).toBe(403);
+    expect(model.calls).toHaveLength(0);
+  });
+
+  it("answers an allowed origin with its own CORS header", async () => {
+    const response = await handleChat(chatRequest(validBody()), env, new FakeModel(), freshDay());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://jordipatuel.com");
+  });
+
+  it("keeps the CORS header on a validation error so the page can read it", async () => {
+    const response = await handleChat(chatRequest("hola"), env, new FakeModel(), freshDay());
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://jordipatuel.com");
+  });
+});
