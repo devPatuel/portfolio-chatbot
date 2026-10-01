@@ -13,14 +13,14 @@
    npm install
    ```
 
-2. Crea `.dev.vars` con un señuelo y una sal aleatorios. El archivo está en `.gitignore`: nunca se sube.
+2. Crea `.dev.vars` con un señuelo, una sal y un secreto del pase aleatorios, y la clave secreta de prueba de Turnstile. El archivo está en `.gitignore`: nunca se sube.
 
    ```bash
-   printf 'CANARY=ZX-%s\nVISITOR_SALT=%s\nALLOWED_ORIGINS=http://localhost:8788\nVISITOR_DAILY_LIMIT=20\nGLOBAL_DAILY_LIMIT=100\n' \
-     "$(openssl rand -hex 8 | tr 'a-f' 'A-F')" "$(openssl rand -hex 32)" > .dev.vars
+   printf 'CANARY=ZX-%s\nVISITOR_SALT=%s\nPASS_SECRET=%s\nTURNSTILE_SECRET=1x0000000000000000000000000000000AA\nALLOWED_ORIGINS=http://localhost:8788\nVISITOR_DAILY_LIMIT=20\nGLOBAL_DAILY_LIMIT=100\n' \
+     "$(openssl rand -hex 8 | tr 'a-f' 'A-F')" "$(openssl rand -hex 32)" "$(openssl rand -hex 32)" > .dev.vars
    ```
 
-   `.dev.vars.example` muestra la forma del archivo con valores falsos. En local, `.dev.vars` sustituye a los `vars` de `wrangler.jsonc`.
+   `.dev.vars.example` muestra la forma del archivo con valores falsos. En local, `.dev.vars` sustituye a los `vars` de `wrangler.jsonc`. `PASS_SECRET` necesita al menos 32 caracteres; con uno más corto, `/session` y `/chat` responden 500 `server_misconfigured`.
 
 3. Inicia sesión en Cloudflare (necesario porque el binding de IA siempre es remoto):
 
@@ -42,6 +42,19 @@
    ```
 
    Abre `http://localhost:8788`. El Worker escucha en `http://localhost:8787/chat`.
+
+## Probar el chat completo
+
+1. En `portfolio-chatbot`: `npm run dev` (Worker en `http://localhost:8787`).
+2. En `~/dev/portfolio` (rama `chat-flotante`): `python3 -m http.server 8788`.
+3. Abre `http://localhost:8788` y pulsa el lanzador del chat. Al abrirlo por primera vez, el widget carga Turnstile, pide un pase a `/session` y ya puede enviar mensajes.
+
+Notas:
+
+- `evals` y la página `dev/index.html` no usan Turnstile real: piden su propio pase enviando a `/session` el token de prueba `XXXX.DUMMY.TOKEN.XXXX`, que el secreto de prueba acepta siempre.
+- Las claves de prueba de Turnstile (site key `1x00000000000000000000BB`, secret `1x0000000000000000000000000000000AA`) funcionan en `localhost`. La site key de prueba ya está en `js/chat-config.js` del portfolio.
+- **Nunca** va una clave real de Turnstile a un archivo versionado: la secret real se define con `wrangler secret put` y la site key real se cambia en `chat-config.js` solo en la fase de publicación.
+- El pase está atado al visitante, que sale de tu IP: si cambias de red con la página abierta, el widget renueva el pase solo.
 
 ## Pruebas
 

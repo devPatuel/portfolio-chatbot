@@ -149,6 +149,7 @@ Errores (cuerpo `{ "error": código }`):
 | 401 | `invalid_pass` | Pase ausente, caducado, mal firmado o de otro visitante |
 | 403 | `forbidden_origin` | Origen no permitido |
 | 403 | `captcha_failed` | Turnstile rechaza el código (solo en `/session`) |
+| 503 | `captcha_unavailable` | Turnstile no responde (solo en `/session`; no se emite pase) |
 | 429 | `visitor_limit` | El visitante agotó sus mensajes del día |
 | 503 | `daily_limit` | Se agotó el tope global del día |
 | 502 | `model_error` | El modelo falla o agota su cuota |
@@ -370,10 +371,18 @@ Verificado el 2026-09-30 al construir la capa 0:
 - En local, `.dev.vars` sustituye a los `vars` de `wrangler.jsonc` (comprobado al subir los
   límites a 1000 para las rondas de ataques).
 
+Verificado el 2026-10-01 al construir las capas 5 a 7:
+
+- Las claves de prueba de Turnstile existen y funcionan en `localhost` (documentación de Cloudflare y nuestra ejecución en Chrome): site key `1x00000000000000000000BB` (invisible, siempre pasa) y secret `1x0000000000000000000000000000000AA`.
+- La CSP necesaria: `script-src` y `frame-src` de `https://challenges.cloudflare.com`, y `connect-src` con `'self'` y la URL del backend.
+- La clave de prueba invisible no pinta ningún recuadro y su callback se ejecuta.
+- El widget funciona bajo esa CSP sin violaciones (solo un aviso interno de Turnstile en la consola).
+
 Pendiente de verificar al implementar:
 
 - Que las tareas programadas están en el plan gratuito (en local la limpieza funciona; falta el despliegue).
-- Claves de prueba de Turnstile para desarrollo local.
+- Que Turnstile con claves **reales** funciona desde `localhost` o exige el dominio registrado (comprobar en la fase de publicación).
+- Qué almacena Turnstile en el navegador (cookies o almacenamiento de su iframe; comprobar en la publicación).
 - Que el panel de Cloudflare permite consultar las tablas de D1 desde el navegador.
 - Que el tiempo de espera del modelo no cuenta como CPU del Worker.
 
