@@ -203,8 +203,11 @@ Detalles:
 Restricciones del contenido de `knowledge.ts` (heredadas de las reglas del portfolio):
 
 - Solo información ya publicada en jordipatuel.com y en el CV publicado.
-- El teléfono y los correos personales no se incluyen. El bot no los conoce, así que no puede
-  filtrarlos: lo que el modelo no tiene, no lo puede revelar.
+- El teléfono y los correos personales de Jordi no se incluyen: el bot no los conoce, así que no
+  puede filtrarlos (lo que el modelo no tiene, no lo puede revelar). La única excepción es
+  `chatbot.info@jordipatuel.com`, porque el bot siempre debe poder ofrecer una vía de contacto. Es
+  una dirección desechable y trazable: el dominio tiene un catch-all, así que todo lo que llegue
+  ahí viene del chatbot, y se puede cambiar sin tocar el buzón principal.
 - Jordi revisa y aprueba el texto de `knowledge.ts` antes de usarlo.
 - El portal de empleados, siempre genérico: nunca se nombra la empresa. El negocio propio
   aparece como "un negocio".
@@ -353,11 +356,20 @@ Fuentes: <https://developers.cloudflare.com/workers/platform/pricing/>,
 <https://developers.cloudflare.com/workers-ai/platform/pricing/>,
 <https://developers.cloudflare.com/workers/platform/limits/>
 
+Verificado el 2026-09-30 al construir la capa 0:
+
+- Usar Workers AI desde la cuenta gratuita no ha pedido tarjeta: iniciar sesión con `wrangler`,
+  registrar el subdominio `workers.dev` y llamar al modelo han funcionado sin ella.
+- Las llamadas a Workers AI en desarrollo local van a Cloudflare y gastan cuota: `wrangler dev`
+  avisa de que el binding de IA siempre es remoto y la respuesta de la API incluye las neuronas
+  consumidas (unas 0,5 por un mensaje mínimo). Falta que Jordi lo vea en el panel.
+- El identificador `@cf/meta/llama-3.1-8b-instruct-fp8` sigue en el catálogo, igual que
+  `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
+- `wrangler dev` necesita que la cuenta tenga un subdominio `workers.dev`. Recién creado, tarda
+  unos minutos en tener certificado; mientras tanto el modelo responde «internal error».
+
 Pendiente de verificar al implementar:
 
-- Si el alta del plan gratuito pide tarjeta.
-- Que las llamadas a Workers AI en desarrollo local van a Cloudflare y gastan cuota.
-- Identificadores exactos de los modelos y si siguen en el catálogo.
 - Que las tareas programadas están en el plan gratuito.
 - Claves de prueba de Turnstile para desarrollo local.
 - Que el panel de Cloudflare permite consultar las tablas de D1 desde el navegador.

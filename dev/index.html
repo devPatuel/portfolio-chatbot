@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chatbot — pruebas en local</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    #log p { padding: 0.5rem 0.75rem; border-radius: 0.5rem; white-space: pre-wrap; }
+    .user { background: #e8e6e1; }
+    .assistant { background: #f7f6f3; border: 1px solid #d8d5ce; }
+    form { display: flex; gap: 0.5rem; }
+    input[type="text"] { flex: 1; padding: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Chatbot — pruebas en local</h1>
+  <p>Solo para desarrollo. Esta página no se publica.</p>
+  <label>
+    <input type="checkbox" id="unsafe">
+    Pintar la respuesta como HTML (inseguro, solo para demostrar el ataque)
+  </label>
+  <div id="log"></div>
+  <form id="form">
+    <input type="text" id="message" autocomplete="off" placeholder="Escribe un mensaje" required>
+    <button>Enviar</button>
+  </form>
+  <p id="status"></p>
+
+  <script type="module">
+    const API = "http://localhost:8787/chat";
+    const conversationId = crypto.randomUUID();
+    const turns = [];
+    const logEl = document.getElementById("log");
+    const statusEl = document.getElementById("status");
+    const inputEl = document.getElementById("message");
+
+    function addLine(role, text, asHtml) {
+      const line = document.createElement("p");
+      line.className = role;
+      // DELIBERATELY UNSAFE when the checkbox is ticked: shows why model output must be
+      // rendered as text. The real widget always uses textContent.
+      if (asHtml) line.innerHTML = text;
+      else line.textContent = text;
+      logEl.append(line);
+    }
+
+    document.getElementById("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = inputEl.value;
+      inputEl.value = "";
+      addLine("user", message, false);
+      statusEl.textContent = "Escribiendo…";
+      try {
+        const response = await fetch(API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId, message, history: turns }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          statusEl.textContent = `Error ${response.status}: ${data.error}`;
+          return;
+        }
+        addLine("assistant", data.reply, document.getElementById("unsafe").checked);
+        turns.push({ role: "user", content: message }, { role: "assistant", content: data.reply });
+        statusEl.textContent = `Te quedan ${data.remaining} mensajes`;
+      } catch {
+        statusEl.textContent = "No se pudo conectar con el backend";
+      }
+    });
+  </script>
+</body>
+</html>
