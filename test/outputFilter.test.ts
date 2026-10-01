@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { classify, containsCanary, isUsableCanary, normalize, truncate } from "../src/outputFilter";
+import { CONFIG } from "../src/config";
 
 const CANARY = "ZX-3F9A1C0B7E2D4A68";
-const REFUSAL = "Solo puedo responder preguntas sobre el perfil profesional de Jordi.";
+const REFUSAL = CONFIG.refusalText;
 
 describe("normalize", () => {
   it("lowercases and keeps only letters and digits", () => {

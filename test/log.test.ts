@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import { bumpMetric, saveExchange } from "../src/log";
+import { CONFIG } from "../src/config";
 
 describe("bumpMetric", () => {
   it("creates the counter and then increments it", async () => {
@@ -21,7 +22,7 @@ describe("saveExchange", () => {
       conversationId: "11111111-1111-4111-8111-111111111111",
       kind: "refused",
       userMessage: "¿Capital de Francia?",
-      modelReply: "Solo puedo responder preguntas sobre el perfil profesional de Jordi.",
+      modelReply: CONFIG.refusalText,
     });
 
     const row = await env.DB.prepare(
@@ -31,7 +32,7 @@ describe("saveExchange", () => {
       created_at: "2033-01-01T10:00:00.000Z",
       kind: "refused",
       user_message: "¿Capital de Francia?",
-      model_reply: "Solo puedo responder preguntas sobre el perfil profesional de Jordi.",
+      model_reply: CONFIG.refusalText,
     });
     expect(Object.keys(row ?? {}).sort()).toEqual([
       "conversation_id",

@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import { handleChat } from "../src/chat";
+import { CONFIG } from "../src/config";
 import { chatRequest, envWith, FakeModel, freshDay, validBody } from "./helpers";
 
 describe("handleChat — separated instructions", () => {
@@ -169,7 +170,7 @@ describe("handleChat — limits", () => {
   });
 });
 
-const REFUSAL = "Solo puedo responder preguntas sobre el perfil profesional de Jordi.";
+const REFUSAL = CONFIG.refusalText;
 
 async function metric(now: Date, name: string): Promise<number> {
   const row = await env.DB.prepare("SELECT count FROM metrics WHERE day = ?1 AND name = ?2")

@@ -9,5 +9,5 @@ export const CONFIG = {
   maxOutputTokens: 400,
   exchangeRetentionDays: 30,
   model: "@cf/meta/llama-3.1-8b-instruct-fp8",
-  refusalText: "Solo puedo responder preguntas sobre el perfil profesional de Jordi.",
+  refusalText: "Soy Patu y solo puedo responder preguntas sobre el perfil profesional de Jordi.",
 } as const;
