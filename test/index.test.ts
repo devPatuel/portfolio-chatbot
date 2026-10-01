@@ -20,6 +20,23 @@ describe("routing", () => {
     expect(response.status).toBe(405);
   });
 
+  it("answers the preflight of /session for an allowed origin", async () => {
+    const response = await call("/session", { method: "OPTIONS", headers: { Origin: ORIGIN } });
+    expect(response.status).toBe(204);
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+    expect(response.headers.get("Access-Control-Allow-Headers")).toContain("Authorization");
+  });
+
+  it("refuses the preflight of /session for a foreign origin", async () => {
+    const response = await call("/session", { method: "OPTIONS", headers: { Origin: "https://evil.example" } });
+    expect(response.status).toBe(403);
+  });
+
+  it("returns 405 for GET on /session", async () => {
+    const response = await call("/session", { method: "GET" });
+    expect(response.status).toBe(405);
+  });
+
   it("answers the preflight of an allowed origin", async () => {
     const response = await call("/chat", { method: "OPTIONS", headers: { Origin: ORIGIN } });
     expect(response.status).toBe(204);

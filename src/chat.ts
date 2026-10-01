@@ -2,7 +2,7 @@ import { readJsonBody } from "./body";
 import { CONFIG } from "./config";
 import { json } from "./http";
 import { KNOWLEDGE } from "./knowledge";
-import { bumpMetric, saveExchange, type MetricName } from "./log";
+import { countMetric, errorMessage, saveExchange } from "./log";
 import type { ModelProvider } from "./model";
 import { corsHeaders, isAllowedOrigin, parseAllowedOrigins } from "./origin";
 import { classify, isUsableCanary, truncate } from "./outputFilter";
@@ -11,20 +11,6 @@ import { checkAndCount, limitsFromEnv } from "./rateLimit";
 import { validateChatRequest } from "./validate";
 import { dayOf, visitorId } from "./visitor";
 
-// A counter that fails to update must never change the response.
-// Log only the message: provider errors can carry request details we do not want in logs.
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "unknown";
-}
-
-async function count(env: Env, day: string, name: MetricName): Promise<void> {
-  try {
-    await bumpMetric(env.DB, day, name);
-  } catch (error) {
-    console.error("metric failed", name, errorMessage(error));
-  }
-}
-
 export async function handleChat(request: Request, env: Env, model: ModelProvider, now: Date): Promise<Response> {
   const day = dayOf(now);
 
@@ -32,7 +18,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
   //    A script can forge this header: that is what rate limits and the captcha are for.
   const origin = request.headers.get("Origin");
   if (!isAllowedOrigin(origin, parseAllowedOrigins(env.ALLOWED_ORIGINS))) {
-    await count(env, day, "rejected_origin");
+    await countMetric(env.DB, day, "rejected_origin");
     return json({ error: "forbidden_origin" }, 403);
   }
   const cors = corsHeaders(origin);
@@ -47,7 +33,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
   // 2. Validation. The visitor only learns that the request was invalid, never which rule it broke.
   const parsed = validateChatRequest(await readJsonBody(request, CONFIG.maxBodyBytes));
   if (!parsed.ok) {
-    await count(env, day, "rejected_invalid");
+    await countMetric(env.DB, day, "rejected_invalid");
     return json({ error: "invalid_request" }, 400, cors);
   }
   const { conversationId, message, history } = parsed.value;
@@ -60,10 +46,10 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
   const limit = await checkAndCount(env.DB, day, visitor, limitsFromEnv(env));
   if (!limit.allowed) {
     if (limit.reason === "visitor_limit") {
-      await count(env, day, "limited_visitor");
+      await countMetric(env.DB, day, "limited_visitor");
       return json({ error: "visitor_limit" }, 429, cors);
     }
-    await count(env, day, "limited_global");
+    await countMetric(env.DB, day, "limited_global");
     return json({ error: "daily_limit" }, 503, cors);
   }
 
@@ -78,7 +64,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
     if (!raw.trim()) throw new Error("empty model reply");
   } catch (error) {
     console.error("model failed", errorMessage(error));
-    await count(env, day, "model_errors");
+    await countMetric(env.DB, day, "model_errors");
     return json({ error: "model_error" }, 502, cors);
   }
 
@@ -86,7 +72,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
   //    same sentence as any off-topic question, so the attacker gets no signal.
   const kind = classify(raw, env.CANARY, CONFIG.refusalText);
   const reply = kind === "canary" ? CONFIG.refusalText : truncate(raw, CONFIG.maxHistoryEntryChars);
-  if (kind === "canary") await count(env, day, "canary_hits");
+  if (kind === "canary") await countMetric(env.DB, day, "canary_hits");
 
   // 6. Log. The original reply is stored, even when it was blocked, to study what worked.
   try {

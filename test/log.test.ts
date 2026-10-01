@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
-import { bumpMetric, saveExchange } from "../src/log";
+import { bumpMetric, countMetric, saveExchange } from "../src/log";
 import { CONFIG } from "../src/config";
 
 describe("bumpMetric", () => {
@@ -42,5 +42,17 @@ describe("saveExchange", () => {
       "model_reply",
       "user_message",
     ]);
+  });
+});
+
+describe("countMetric", () => {
+  it("never throws when the database fails", async () => {
+    const brokenDb = {
+      prepare() {
+        throw new Error("D1 down");
+      },
+    } as unknown as D1Database;
+
+    await expect(countMetric(brokenDb, "2030-02-01", "rejected_pass")).resolves.toBeUndefined();
   });
 });

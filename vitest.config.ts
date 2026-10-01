@@ -20,6 +20,8 @@ export default defineConfig(async () => {
             ALLOWED_ORIGINS: "https://jordipatuel.com,http://localhost:8788",
             VISITOR_DAILY_LIMIT: "3",
             GLOBAL_DAILY_LIMIT: "5",
+            PASS_SECRET: "test-pass-secret-0123456789abcdef-0123456789",
+            TURNSTILE_SECRET: "1x0000000000000000000000000000000AA",
           },
         },
       }),

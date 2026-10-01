@@ -3,6 +3,9 @@ import type { ExchangeKind } from "./outputFilter";
 export type MetricName =
   | "rejected_invalid"
   | "rejected_origin"
+  | "rejected_pass"
+  | "captcha_failed"
+  | "captcha_unavailable"
   | "limited_visitor"
   | "limited_global"
   | "canary_hits"
@@ -15,6 +18,20 @@ export async function bumpMetric(db: D1Database, day: string, name: MetricName):
     )
     .bind(day, name)
     .run();
+}
+
+// Log only the message: provider errors can carry request details we do not want in logs.
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "unknown";
+}
+
+// A counter that fails to update must never change the response.
+export async function countMetric(db: D1Database, day: string, name: MetricName): Promise<void> {
+  try {
+    await bumpMetric(db, day, name);
+  } catch (error) {
+    console.error("metric failed", name, errorMessage(error));
+  }
 }
 
 export interface Exchange {

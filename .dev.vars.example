@@ -4,3 +4,7 @@ VISITOR_SALT=replace-with-64-random-hex-chars
 ALLOWED_ORIGINS=http://localhost:8788
 VISITOR_DAILY_LIMIT=20
 GLOBAL_DAILY_LIMIT=100
+# Generate with: openssl rand -hex 32. Left empty on purpose: without it the Worker answers 500.
+PASS_SECRET=
+# Cloudflare's public test secret key: it always passes. Replace it with the real one only when publishing.
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
