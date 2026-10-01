@@ -399,8 +399,11 @@ describe("issuePass and verifyPass", () => {
 
   it("rejects a pass with a damaged signature", async () => {
     const pass = await issuePass(SECRET, VISITOR, NOW, 1800);
-    const last = pass.at(-1) === "A" ? "B" : "A";
-    expect(await verifyPass(SECRET, pass.slice(0, -1) + last, VISITOR, NOW)).toBe(false);
+    const [payload, signature] = pass.split(".");
+    // Damage the first character: the last one of a base64 text only carries padding bits,
+    // so changing it could decode to the very same bytes.
+    const damaged = (signature[0] === "A" ? "B" : "A") + signature.slice(1);
+    expect(await verifyPass(SECRET, `${payload}.${damaged}`, VISITOR, NOW)).toBe(false);
   });
 
   it.each(["", "abc", "a.b.c", "a.", ".b", ".", "%%%.%%%", "a b.c d"])("rejects malformed input %j without throwing", async (pass) => {
