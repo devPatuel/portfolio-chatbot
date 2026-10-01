@@ -48,4 +48,22 @@ describe("CloudflareTurnstile", () => {
     }) as unknown as typeof fetch;
     await expect(new CloudflareTurnstile("s", failing).verify("t", "1.1.1.1")).rejects.toThrow("network down");
   });
+
+  it("calls the fetcher without binding it to the verifier instance", async () => {
+    let seenThis: unknown = "not-called";
+    const fetcher = async function (this: unknown) {
+      seenThis = this;
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    } as unknown as typeof fetch;
+    const verifier = new CloudflareTurnstile("s", fetcher);
+
+    await verifier.verify("t", "1.1.1.1");
+
+    expect(seenThis).not.toBe(verifier);
+  });
+
+  it("throws when a 200 response is not JSON, so the caller fails closed", async () => {
+    const fetcher = (async () => new Response("<html>oops</html>", { status: 200 })) as unknown as typeof fetch;
+    await expect(new CloudflareTurnstile("s", fetcher).verify("t", "1.1.1.1")).rejects.toThrow();
+  });
 });

@@ -17,7 +17,9 @@ export class CloudflareTurnstile implements TurnstileVerifier {
     const body = new URLSearchParams({ secret: this.secret, response: token });
     if (ip !== "unknown") body.set("remoteip", ip);
 
-    const response = await this.fetcher(SITEVERIFY_URL, { method: "POST", body });
+    // Call through a local so the global fetch never runs with `this` = this instance (Workers throw "Illegal invocation").
+    const fetcher = this.fetcher;
+    const response = await fetcher(SITEVERIFY_URL, { method: "POST", body });
     if (!response.ok) throw new Error(`siteverify http ${response.status}`);
 
     const result = (await response.json()) as { success?: unknown };
