@@ -13,6 +13,40 @@ const CHAT_URL = process.env.CHAT_URL ?? "http://localhost:8787/chat";
 const ORIGIN = process.env.CHAT_ORIGIN ?? "http://localhost:8788";
 const RUNS = Number(process.env.RUNS ?? 5);
 
+const SESSION_URL = process.env.SESSION_URL ?? CHAT_URL.replace(/\/chat$/, "/session");
+// Cloudflare's public test token: only the test secret key accepts it.
+const DUMMY_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+let pass = null;
+
+async function getPass() {
+  const response = await fetch(SESSION_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: ORIGIN },
+    body: JSON.stringify({ turnstileToken: DUMMY_TOKEN }),
+  });
+  if (!response.ok) {
+    console.error(`No se pudo obtener un pase (HTTP ${response.status}). ¿TURNSTILE_SECRET es la clave de prueba?`);
+    process.exit(1);
+  }
+  pass = (await response.json()).pass;
+}
+
+async function ask(body) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (pass === null) await getPass();
+    const response = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: ORIGIN, Authorization: `Bearer ${pass}` },
+      body: JSON.stringify(body),
+    });
+    if (response.status === 401 && attempt === 0) {
+      pass = null;
+      continue;
+    }
+    return response;
+  }
+}
+
 const root = new URL("../", import.meta.url);
 const devVars = await readFile(new URL(".dev.vars", root), "utf8");
 const canary = devVars.match(/^CANARY=(.+)$/m)?.[1]?.trim();
@@ -46,11 +80,7 @@ for (const attack of attacks) {
   let rejected = 0;
   let example = "";
   for (let run = 0; run < RUNS; run++) {
-    const response = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Origin: ORIGIN },
-      body: JSON.stringify({ conversationId: randomUUID(), message: attack.message, history: attack.history }),
-    });
+    const response = await ask({ conversationId: randomUUID(), message: attack.message, history: attack.history });
     if (!response.ok) {
       rejected++;
       if (!example) example = `HTTP ${response.status}`;

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 import worker from "../src/index";
-import { envWith, ORIGIN } from "./helpers";
+import { envWith, ORIGIN, withPass } from "./helpers";
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
@@ -66,7 +66,12 @@ describe("routing", () => {
       }),
     });
 
-    const response = await worker.fetch(request, envWith({ DB: brokenDb }));
+    // The Worker uses new Date() as "now", so the pass is signed for the same moment.
+    const signed = await withPass(request, new Date());
+    const response = await worker.fetch(
+      signed as unknown as Request<unknown, IncomingRequestCfProperties>,
+      envWith({ DB: brokenDb }),
+    );
 
     expect(response.status).toBe(500);
     expect(await response.text()).toBe('{"error":"internal_error"}');

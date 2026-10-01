@@ -29,6 +29,35 @@
 
   <script type="module">
     const API = "http://localhost:8787/chat";
+    const SESSION = "http://localhost:8787/session";
+    let pass = null;
+
+    async function getPass() {
+      const response = await fetch(SESSION, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Cloudflare's public test token: only the test secret key accepts it.
+        body: JSON.stringify({ turnstileToken: "XXXX.DUMMY.TOKEN.XXXX" }),
+      });
+      if (!response.ok) throw new Error(`session ${response.status}`);
+      pass = (await response.json()).pass;
+    }
+
+    async function ask(body) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (pass === null) await getPass();
+        const response = await fetch(API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${pass}` },
+          body: JSON.stringify(body),
+        });
+        if (response.status === 401 && attempt === 0) {
+          pass = null;
+          continue;
+        }
+        return response;
+      }
+    }
     const conversationId = crypto.randomUUID();
     const turns = [];
     const logEl = document.getElementById("log");
@@ -52,11 +81,7 @@
       addLine("user", message, false);
       statusEl.textContent = "Escribiendo…";
       try {
-        const response = await fetch(API, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId, message, history: turns }),
-        });
+        const response = await ask({ conversationId, message, history: turns });
         const data = await response.json();
         if (!response.ok) {
           statusEl.textContent = `Error ${response.status}: ${data.error}`;
