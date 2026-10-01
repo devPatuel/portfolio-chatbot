@@ -5,9 +5,13 @@ import { KNOWLEDGE } from "./knowledge";
 import type { ModelProvider } from "./model";
 import { corsHeaders, isAllowedOrigin, parseAllowedOrigins } from "./origin";
 import { buildSystemPrompt } from "./prompt";
+import { checkAndCount, limitsFromEnv } from "./rateLimit";
 import { validateChatRequest } from "./validate";
+import { dayOf, visitorId } from "./visitor";
 
-export async function handleChat(request: Request, env: Env, model: ModelProvider, _now: Date): Promise<Response> {
+export async function handleChat(request: Request, env: Env, model: ModelProvider, now: Date): Promise<Response> {
+  const day = dayOf(now);
+
   // 1. Origin. Stops other websites from using the bot through their visitors' browsers.
   //    A script can forge this header: that is what rate limits and the captcha are for.
   const origin = request.headers.get("Origin");
@@ -21,11 +25,23 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
   if (!parsed.ok) return json({ error: "invalid_request" }, 400, cors);
   const { message, history } = parsed.value;
 
-  // 3. Model. Rules travel in the system message; the visitor's text only ever travels as "user".
+  // 3. Limits. Everything cheap runs before the model, the only scarce resource.
+  //    Without the header every caller shares one bucket, which is the safe direction.
+  //    If D1 fails this throws and the model is never reached: failing closed.
+  const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+  const visitor = await visitorId(ip, day, env.VISITOR_SALT);
+  const limit = await checkAndCount(env.DB, day, visitor, limitsFromEnv(env));
+  if (!limit.allowed) {
+    return limit.reason === "visitor_limit"
+      ? json({ error: "visitor_limit" }, 429, cors)
+      : json({ error: "daily_limit" }, 503, cors);
+  }
+
+  // 4. Model. Rules travel in the system message; the visitor's text only ever travels as "user".
   const reply = await model.generate(buildSystemPrompt(KNOWLEDGE, env.CANARY), [
     ...history,
     { role: "user", content: message },
   ]);
 
-  return json({ reply, remaining: 999 }, 200, cors);
+  return json({ reply, remaining: limit.remaining }, 200, cors);
 }

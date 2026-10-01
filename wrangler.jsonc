@@ -6,6 +6,17 @@
   "observability": { "enabled": true },
   "ai": { "binding": "AI" },
   "vars": {
-    "ALLOWED_ORIGINS": "https://jordipatuel.com,https://www.jordipatuel.com"
-  }
+    "ALLOWED_ORIGINS": "https://jordipatuel.com,https://www.jordipatuel.com",
+    "VISITOR_DAILY_LIMIT": "20",
+    "GLOBAL_DAILY_LIMIT": "100"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "portfolio-chatbot",
+      // Placeholder: the real id is set when the database is created for production.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
 }

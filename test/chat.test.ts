@@ -111,3 +111,75 @@ describe("handleChat — origin", () => {
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://jordipatuel.com");
   });
 });
+
+describe("handleChat — limits", () => {
+  it("reports how many messages the visitor has left", async () => {
+    const now = freshDay();
+    const first = await handleChat(chatRequest(validBody()), env, new FakeModel(), now);
+    const second = await handleChat(chatRequest(validBody()), env, new FakeModel(), now);
+
+    expect(await first.json()).toMatchObject({ remaining: 2 });
+    expect(await second.json()).toMatchObject({ remaining: 1 });
+  });
+
+  it("answers 429 once the visitor is out of messages and stops calling the model", async () => {
+    const now = freshDay();
+    const model = new FakeModel();
+    for (let i = 0; i < 3; i++) await handleChat(chatRequest(validBody()), env, model, now);
+
+    const response = await handleChat(chatRequest(validBody()), env, model, now);
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({ error: "visitor_limit" });
+    expect(model.calls).toHaveLength(3);
+  });
+
+  it("still serves a different visitor", async () => {
+    const now = freshDay();
+    for (let i = 0; i < 3; i++) await handleChat(chatRequest(validBody()), env, new FakeModel(), now);
+
+    const other = chatRequest(validBody(), { "CF-Connecting-IP": "198.51.100.9" });
+    const response = await handleChat(other, env, new FakeModel(), now);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("answers 503 once the global limit is reached", async () => {
+    const now = freshDay();
+    const model = new FakeModel();
+    for (let i = 0; i < 5; i++) {
+      await handleChat(chatRequest(validBody(), { "CF-Connecting-IP": `198.51.100.${i}` }), env, model, now);
+    }
+
+    const late = chatRequest(validBody(), { "CF-Connecting-IP": "198.51.100.200" });
+    const response = await handleChat(late, env, model, now);
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "daily_limit" });
+    expect(model.calls).toHaveLength(5);
+  });
+
+  it("does not spend a message on an invalid request", async () => {
+    const now = freshDay();
+    await handleChat(chatRequest("hola"), env, new FakeModel(), now);
+
+    const response = await handleChat(chatRequest(validBody()), env, new FakeModel(), now);
+
+    expect(await response.json()).toMatchObject({ remaining: 2 });
+  });
+
+  it("never calls the model when the limits cannot be checked", async () => {
+    const model = new FakeModel();
+    const brokenDb = {
+      prepare() {
+        throw new Error("D1 unavailable");
+      },
+    } as unknown as D1Database;
+
+    await expect(
+      handleChat(chatRequest(validBody()), { ...env, DB: brokenDb }, model, freshDay()),
+    ).rejects.toThrow();
+
+    expect(model.calls).toHaveLength(0);
+  });
+});
