@@ -34,7 +34,7 @@ export async function handleChat(request: Request, env: Env, model: ModelProvide
 
   // 2. Pass. Proves the captcha was solved by this same visitor in the last 30 minutes. It is
   //    checked before reading the body or spending quota because it is the cheapest check left.
-  //    Without the header every caller shares one bucket, which is the safe direction.
+  // Without the header every caller shares one bucket, which is the safe direction.
   const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
   const visitor = await visitorId(ip, day, env.VISITOR_SALT);
   const token = bearerToken(request.headers.get("Authorization"));

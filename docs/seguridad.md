@@ -98,4 +98,11 @@ Dar al asistente una personalidad (Patu) facilitó los ataques de cambio de pape
 | Teclado solo y accesibilidad revisados a mano | Plan 3 |
 | Secretos reales (`CANARY`, `VISITOR_SALT`, `PASS_SECRET`, `TURNSTILE_SECRET`) con `wrangler secret put`, `gitleaks` y D1 de producción | Plan 3 |
 
+Para la publicación (Plan 3):
+
+- Una regla de límite de peticiones de Cloudflare WAF por IP sobre `/chat` y `/session` (el plan gratuito incluye una). Cubre las escrituras gratuitas a D1 de `rejected_pass`, `rejected_origin` y `captcha_failed`, y el abuso de `/session`.
+- `AbortSignal.timeout(5000)` en el `fetch` de `siteverify` (`src/turnstile.ts`), para que un Cloudflare lento no retenga peticiones (ver el punto 9 de la sección 3).
+- Comprobar `hostname` en la respuesta de `siteverify` contra los orígenes permitidos, como recomienda Cloudflare; hoy solo se lee `success`.
+- `TURNSTILE_SECRET` de producción: debe ser el secreto **real**. Si quedara el secreto público de prueba `1x0000000000000000000000000000000AA`, todos los tokens pasarían. Añadirlo a la lista de comprobación de publicación y valorar rechazar los secretos de prueba (`1x`, `2x`, `3x`) cuando `ALLOWED_ORIGINS` sea el de producción.
+
 Cerrado en el Plan 2: HTML o Markdown en la respuesta (el widget pinta con `textContent`, con prueba estática que prohíbe `innerHTML` y similares), aviso de privacidad antes del primer mensaje, e historial de más de 20 entradas (el widget envía solo las últimas 20, pares completos empezando por `user`).

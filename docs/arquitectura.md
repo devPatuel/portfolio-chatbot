@@ -103,9 +103,9 @@ Migración: `migrations/0001_init.sql`.
 
 | Tabla | Columnas | Quién escribe |
 |---|---|---|
-| `rate_limit` | `day`, `visitor`, `count` (clave `day`+`visitor`) | `rateLimit.ts` (paso 3); `cleanup.ts` borra días anteriores |
+| `rate_limit` | `day`, `visitor`, `count` (clave `day`+`visitor`) | `rateLimit.ts` (paso 4); `cleanup.ts` borra días anteriores |
 | `metrics` | `day`, `name`, `count` (clave `day`+`name`) | `rateLimit.ts` (contador `messages`, el tope global), `log.ts` y `session.ts` (rechazos, `rejected_pass`, `captcha_failed`, `captcha_unavailable`, límites, `canary_hits`, `model_errors`) |
-| `exchanges` | `id`, `created_at`, `conversation_id`, `kind` (`ok`/`refused`/`canary`), `user_message`, `model_reply` | `log.ts` (paso 6); `cleanup.ts` borra los de más de 30 días |
+| `exchanges` | `id`, `created_at`, `conversation_id`, `kind` (`ok`/`refused`/`canary`), `user_message`, `model_reply` | `log.ts` (paso 7); `cleanup.ts` borra los de más de 30 días |
 
 `exchanges` no guarda IP ni identificador de visitante.
 
