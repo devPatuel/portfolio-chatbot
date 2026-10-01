@@ -1379,13 +1379,13 @@ Expected: árbol limpio, rama `chat-flotante`, `✓ 6 página(s): sin terceros, 
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test \"tests/*.test.js\"",
     "verificar": "node scripts/verificar.mjs"
   }
 }
 ```
 
-Sin dependencias. (`"type": "module"` hace que los `.js` se carguen como módulos en Node para las pruebas; el navegador no lo mira.)
+Sin dependencias. El script usa un glob entre comillas (`"tests/*.test.js"`) porque `node --test tests/` falla en Node 26 (trata el directorio como un módulo); por eso en todos los pasos se ejecuta `npm test` y no `node --test tests/`. (`"type": "module"` hace que los `.js` se carguen como módulos en Node para las pruebas; el navegador no lo mira.)
 
 - [ ] **Step 3: Escribir las pruebas (fallan)**
 
@@ -1494,7 +1494,7 @@ describe('ChatError', () => {
 
 - [ ] **Step 4: Ejecutar y ver que fallan**
 
-Run: `node --test tests/`
+Run: `npm test`
 Expected: FAIL (`../js/chat-core.js` no existe).
 
 - [ ] **Step 5: Implementar `js/chat-core.js`**
@@ -1548,7 +1548,7 @@ export function uiStateFor(kind) {
 
 - [ ] **Step 6: Ejecutar y ver que pasan**
 
-Run: `node --test tests/`
+Run: `npm test`
 Expected: todas las pruebas en verde.
 
 - [ ] **Step 7: Que el verificador ignore `tests/`**
@@ -1758,7 +1758,7 @@ describe('createChatClient', () => {
 
 - [ ] **Step 2: Ejecutar y ver que fallan**
 
-Run: `node --test tests/`
+Run: `npm test`
 Expected: FAIL (`createChatClient` no existe).
 
 - [ ] **Step 3: Implementar `createChatClient` en `js/chat-core.js`**
@@ -1852,7 +1852,7 @@ export function createChatClient({ backendUrl, fetchFn, getCaptchaToken }) {
 
 - [ ] **Step 4: Ejecutar y ver que pasan**
 
-Run: `node --test tests/ && node scripts/verificar.mjs`
+Run: `npm test && node scripts/verificar.mjs`
 Expected: todas las pruebas en verde y verificador en verde.
 
 - [ ] **Step 5: Commit**
@@ -1952,7 +1952,7 @@ describe('the Content-Security-Policy of the home page allows the chat and nothi
 
 - [ ] **Step 2: Ejecutar y ver que falla**
 
-Run: `node --test tests/`
+Run: `npm test`
 Expected: FAIL (los archivos del widget no existen; la CSP aún no tiene `frame-src`).
 
 - [ ] **Step 3: Crear `js/chat-config.js`**
@@ -2409,7 +2409,7 @@ y en `comprobarScript`, dentro del bucle de `fichero.endsWith('.js')`, sustituir
 
 - [ ] **Step 9: Ejecutar pruebas y verificador**
 
-Run: `node --test tests/ && node scripts/verificar.mjs`
+Run: `npm test && node scripts/verificar.mjs`
 Expected: todo en verde. El enlace `privacidad.html` lo crea JavaScript, así que el verificador no lo comprueba hasta la tarea 11.
 
 - [ ] **Step 10: Comprobar que el widget no usa nada prohibido (a ojo)**
@@ -2559,7 +2559,7 @@ Si en el paso 6 de la tarea 10 se vio que Turnstile guarda algo en el navegador 
 
 - [ ] **Step 3: Ejecutar pruebas y verificador**
 
-Run: `node --test tests/ && node scripts/verificar.mjs`
+Run: `npm test && node scripts/verificar.mjs`
 Expected: todo en verde; el verificador cuenta ahora 7 páginas y confirma que `privacidad.html` no tiene referencias rotas. Si la clase `nota` no existe en `style.css`, quitarla del `<p>` (no añadir estilos nuevos para una línea).
 
 - [ ] **Step 4: Comprobar a mano**
@@ -2613,6 +2613,8 @@ En §6 añadir el código `captcha_unavailable` (503, «Turnstile no responde»)
 
 - [ ] **Step 5: Comprobación final del backend**
 
+`EMPRESA` es una regex con los nombres de la empresa, definida en la shell del controlador (nunca escrita en el repo).
+
 ```bash
 cd ~/dev/portfolio-chatbot
 npm test && npm run typecheck
@@ -2624,11 +2626,11 @@ grep -rln -i -E "$EMPRESA" . --exclude-dir=node_modules --exclude-dir=.wrangler 
 
 Expected: pruebas en verde, sin errores de tipos, ambos `grep` de secretos con `exit: 1` (sin resultados) y el de la empresa con `exit: 1`.
 
-En el portfolio:
+En el portfolio (el `package.json` usa un glob entre comillas, así que `npm test` funciona en Node 26; `EMPRESA` como arriba):
 
 ```bash
 cd ~/dev/portfolio
-node --test tests/ && node scripts/verificar.mjs
+npm test && node scripts/verificar.mjs
 git status --short
 git log --oneline main..chat-flotante
 grep -rln -i -E "$EMPRESA" js css img privacidad.html index.html tests ; echo "company exit: $?"
