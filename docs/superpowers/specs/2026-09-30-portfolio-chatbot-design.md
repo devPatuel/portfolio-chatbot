@@ -362,15 +362,17 @@ Verificado el 2026-09-30 al construir la capa 0:
   registrar el subdominio `workers.dev` y llamar al modelo han funcionado sin ella.
 - Las llamadas a Workers AI en desarrollo local van a Cloudflare y gastan cuota: `wrangler dev`
   avisa de que el binding de IA siempre es remoto y la respuesta de la API incluye las neuronas
-  consumidas (unas 0,5 por un mensaje mínimo). Falta que Jordi lo vea en el panel.
+  consumidas (unas 0,5 por un mensaje mínimo). Verificado también con las rondas de ataques de las capas 0 a 4.
 - El identificador `@cf/meta/llama-3.1-8b-instruct-fp8` sigue en el catálogo, igual que
   `@cf/meta/llama-3.3-70b-instruct-fp8-fast`.
 - `wrangler dev` necesita que la cuenta tenga un subdominio `workers.dev`. Recién creado, tarda
   unos minutos en tener certificado; mientras tanto el modelo responde «internal error».
+- En local, `.dev.vars` sustituye a los `vars` de `wrangler.jsonc` (comprobado al subir los
+  límites a 1000 para las rondas de ataques).
 
 Pendiente de verificar al implementar:
 
-- Que las tareas programadas están en el plan gratuito.
+- Que las tareas programadas están en el plan gratuito (en local la limpieza funciona; falta el despliegue).
 - Claves de prueba de Turnstile para desarrollo local.
 - Que el panel de Cloudflare permite consultar las tablas de D1 desde el navegador.
 - Que el tiempo de espera del modelo no cuenta como CPU del Worker.
