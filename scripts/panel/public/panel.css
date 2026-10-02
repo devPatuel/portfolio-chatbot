@@ -1,0 +1,78 @@
+/* Same palette as jordipatuel.com, so the panel reads as part of the project. */
+:root {
+  --bg: #f7f6f3; --bg-2: #edebe5; --card: #ffffff; --text: #14181c; --dim: #4f5a57; --border: #d9d6ce;
+  --accent: #2f6b4a; --accent-soft: #dfeae2; --warn: #b4521f; --warn-soft: #f6e3d6; --danger: #b3261e; --danger-soft: #fbe3df;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121518; --bg-2: #1b1f23; --card: #1f2428; --text: #ede9e0; --dim: #a9b0ad; --border: #30363b;
+    --accent: #86b79a; --accent-soft: #24382c; --warn: #f0a46c; --warn-soft: #3a2a1f; --danger: #f2948a; --danger-soft: #3d2220;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, sans-serif; }
+button { font: inherit; color: inherit; cursor: pointer; }
+h1, h2 { margin: 0; }
+
+.cabecera { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--card); position: sticky; top: 0; z-index: 2; }
+.cabecera h1 { font-size: 1.1rem; margin-right: auto; }
+.entorno, .tipos { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.entorno button, .tipos button { border: 0; background: transparent; padding: 0.35rem 0.9rem; }
+.entorno button[aria-pressed="true"], .tipos button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+.entorno button[data-remote="1"][aria-pressed="true"] { background: var(--warn); }
+.recargar { border: 1px solid var(--border); background: transparent; border-radius: 999px; width: 2.2rem; height: 2.2rem; font-size: 1.1rem; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.cuerpo { display: grid; grid-template-columns: 15rem 1fr; min-height: calc(100vh - 3.5rem); }
+.dias { border-right: 1px solid var(--border); padding: 1rem; }
+.dias h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.6rem; }
+.lista-dias { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.lista-dias button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; text-align: left; border: 1px solid transparent; border-radius: 10px; background: transparent; padding: 0.45rem 0.6rem; }
+.lista-dias button:hover { background: var(--bg-2); }
+.lista-dias button[aria-current="date"] { border-color: var(--accent); background: var(--accent-soft); }
+.lista-dias .num { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+.punto-canario { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--danger); margin-left: 0.3rem; }
+
+main { padding: 1.25rem 1.5rem 3rem; max-width: 70rem; }
+.estado:empty { display: none; }
+.estado { padding: 0.6rem 0.9rem; border-radius: 10px; background: var(--bg-2); }
+.titulo-dia { font-size: 1.4rem; margin-bottom: 0.8rem; }
+.metricas { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.6rem; margin-bottom: 1.5rem; }
+.metrica { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 0.7rem 0.9rem; }
+.metrica .valor { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.metrica .nombre { color: var(--dim); font-size: 0.85rem; }
+.metrica.alerta { border-color: var(--danger); background: var(--danger-soft); }
+.metrica.aviso { border-color: var(--warn); }
+
+.filtros { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin-bottom: 0.6rem; }
+.buscar { flex: 1; min-width: 12rem; padding: 0.45rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; }
+.resumen { color: var(--dim); margin: 0 0 1rem; }
+
+.conversacion { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 1rem; overflow: hidden; }
+.conversacion.con-canario { border-color: var(--danger); }
+.conversacion > summary { display: flex; gap: 0.8rem; align-items: center; padding: 0.7rem 1rem; cursor: pointer; list-style: none; background: var(--bg-2); }
+.conversacion > summary::-webkit-details-marker { display: none; }
+.conversacion .id { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
+.conversacion .meta { color: var(--dim); font-size: 0.85rem; margin-left: auto; }
+.mensajes { padding: 0.8rem 1rem; display: grid; gap: 0.5rem; }
+.turno { display: grid; gap: 0.35rem; }
+.burbuja { max-width: 75%; padding: 0.55rem 0.85rem; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.burbuja.visitante { justify-self: end; background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
+.burbuja.patu { justify-self: start; background: var(--bg-2); border-bottom-left-radius: 4px; }
+.burbuja.patu.canary { background: var(--danger-soft); border: 1px solid var(--danger); }
+.burbuja.patu.refused { background: var(--warn-soft); }
+.pie { justify-self: start; display: flex; gap: 0.5rem; align-items: center; font-size: 0.78rem; color: var(--dim); }
+.etiqueta { border-radius: 999px; padding: 0.05rem 0.55rem; font-weight: 600; }
+.etiqueta.ok { background: var(--accent-soft); color: var(--accent); }
+.etiqueta.refused { background: var(--warn-soft); color: var(--warn); }
+.etiqueta.canary { background: var(--danger-soft); color: var(--danger); }
+.nota { font-size: 0.8rem; color: var(--danger); }
+
+@media (max-width: 48rem) {
+  .cuerpo { grid-template-columns: 1fr; }
+  .dias { border-right: 0; border-bottom: 1px solid var(--border); }
+  .lista-dias { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
+  .burbuja { max-width: 90%; }
+}

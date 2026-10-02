@@ -84,6 +84,14 @@ npm run conversaciones -- --remote              # producción, cuando esté publ
 
 Muestra las métricas del día y los mensajes agrupados por conversación (horas en UTC).
 
+Lo mismo en el navegador, con días, filtros por tipo y búsqueda:
+
+```bash
+npm run panel        # http://127.0.0.1:8799, conmutador Local / Producción arriba
+```
+
+El panel solo lee. Como lo que muestra lo escribieron desconocidos (muchos, atacando), escucha solo en `127.0.0.1`, rechaza cualquier cabecera `Host` que no sea la suya (DNS rebinding), envía una CSP estricta y pinta todo con `textContent`: con `innerHTML`, un ataque guardado se ejecutaría en el panel (XSS almacenado).
+
 ## Ver las neuronas gastadas
 
 Panel de Cloudflare → **AI → Workers AI → Usage** (`dash.cloudflare.com/<cuenta>/ai/workers-ai/usage`): «Neurons used today: X/10k». Es la cuota gratuita diaria, se reinicia a las 00:00 UTC y el panel tarda unos minutos en reflejar las llamadas. Es la misma cuota en local y en producción.

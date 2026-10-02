@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel de Patu</title>
+  <link rel="stylesheet" href="/panel.css" />
+  <script type="module" src="/panel.js"></script>
+</head>
+<body>
+  <header class="cabecera">
+    <h1>Conversaciones de Patu</h1>
+    <div class="entorno" role="group" aria-label="Base de datos">
+      <button type="button" data-remote="0" aria-pressed="true">Local</button>
+      <button type="button" data-remote="1" aria-pressed="false">Producción</button>
+    </div>
+    <button type="button" class="recargar" aria-label="Recargar">↻</button>
+  </header>
+
+  <div class="cuerpo">
+    <nav class="dias" aria-label="Días">
+      <h2>Días</h2>
+      <ol class="lista-dias"></ol>
+    </nav>
+
+    <main>
+      <p class="estado" role="status"></p>
+      <section aria-label="Métricas del día">
+        <h2 class="titulo-dia"></h2>
+        <div class="metricas"></div>
+      </section>
+
+      <section aria-label="Conversaciones">
+        <div class="filtros">
+          <div class="tipos" role="group" aria-label="Tipo de respuesta">
+            <button type="button" data-kind="" aria-pressed="true">Todas</button>
+            <button type="button" data-kind="ok" aria-pressed="false">Respondidas</button>
+            <button type="button" data-kind="refused" aria-pressed="false">Rechazadas</button>
+            <button type="button" data-kind="canary" aria-pressed="false">Señuelo</button>
+          </div>
+          <input class="buscar" type="search" placeholder="Buscar en los mensajes" aria-label="Buscar en los mensajes" />
+        </div>
+        <p class="resumen"></p>
+        <div class="conversaciones"></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
