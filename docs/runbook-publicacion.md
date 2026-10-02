@@ -81,7 +81,7 @@ Cambiar la dirección local por la real en los **cuatro** sitios, con la misma U
 | Archivo | Qué cambia |
 | --- | --- |
 | `js/chat-config.js` | `backendUrl` y `turnstileSiteKey` (la site key real del paso 3) |
-| `index.html` | `connect-src` de la CSP: `http://localhost:8787` → URL del Worker |
+| **Todas** las páginas `.html` | `connect-src` de la CSP: `http://localhost:8787` → URL del Worker (la misma línea en todas; una prueba exige que sean idénticas) |
 | `scripts/verificar.mjs` | `DIRECCIONES_CHAT`: la misma URL |
 | `tests/seguridad-estatica.test.js` | la prueba de `connect-src`, con la directiva exacta |
 
