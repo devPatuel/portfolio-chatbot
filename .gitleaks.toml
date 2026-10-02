@@ -1,0 +1,7 @@
+# Keep gitleaks' default rules and allow only the fake secrets the tests use.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake secrets used by the tests, never valid anywhere"
+regexes = ['''test-pass-secret-[0-9a-f-]+''']
