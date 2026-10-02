@@ -1,4 +1,5 @@
 // Everything in this file must already be public on jordipatuel.com or in the published CV.
+// Not covered by the Apache 2.0 license: this is personal information, all rights reserved (see NOTICE).
 // Assume any visitor can extract this text word for word.
 export const KNOWLEDGE = `
 ## Quién es

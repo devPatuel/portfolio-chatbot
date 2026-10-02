@@ -1,0 +1,27 @@
+Chatbot del portfolio
+Copyright 2026 Jordi Patuel Pons
+
+El código de este repositorio se publica con la licencia Apache 2.0 (archivo
+LICENSE): puedes usarlo, modificarlo y redistribuirlo, también con fines
+comerciales, siempre que conserves la licencia y este aviso.
+
+La licencia NO cubre lo siguiente:
+
+1. Nombres e identidad. Los nombres "Jordi Patuel", "Patu" y "devPatuel", y el
+   personaje de Patu (su nombre, su personalidad y su imagen), no se licencian.
+   Como dice el apartado 6 de la licencia, no da permiso para usar nombres ni
+   marcas del autor. No puedes llamar "Patu" a tu asistente ni presentarlo
+   como relacionado con Jordi Patuel.
+
+2. Información personal. El contenido de src/knowledge.ts describe el perfil
+   profesional de Jordi Patuel, y lo mismo las partes de evals/results/ y de
+   docs/ que lo reproducen. Todos los derechos reservados sobre ese contenido.
+   Si reutilizas el código, sustitúyelo por tu propia información.
+
+---
+
+The code in this repository is licensed under the Apache License 2.0 (see
+LICENSE). Not covered by the license: the names "Jordi Patuel", "Patu" and
+"devPatuel" and the Patu character (name, personality and image), and the
+personal information in src/knowledge.ts and wherever it is reproduced. All
+rights reserved on those. Replace them with your own if you reuse the code.

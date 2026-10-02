@@ -36,3 +36,8 @@ Para arrancarlo en local hace falta una cuenta de Cloudflare (gratis): ver [Arra
 ## Stack
 
 TypeScript · Cloudflare Workers · Workers AI · D1 (SQLite) · Turnstile · Vitest
+
+## Licencia
+
+El código es [Apache 2.0](LICENSE): úsalo, modifícalo y redistribúyelo, también con fines comerciales. **No** se licencian los nombres «Jordi Patuel», «Patu» y «devPatuel» ni el personaje de Patu, ni mi información personal de `src/knowledge.ts`: detalles en [NOTICE](NOTICE).
+
