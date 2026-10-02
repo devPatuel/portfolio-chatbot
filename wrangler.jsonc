@@ -14,8 +14,9 @@
     {
       "binding": "DB",
       "database_name": "portfolio-chatbot",
-      // Placeholder: the real id is set when the database is created for production.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Production database, created with --jurisdiction eu so the data stays in the EU.
+      // Not a secret: it is useless without access to the Cloudflare account.
+      "database_id": "2a4f2f2e-03d9-453d-8f62-7fc14012636f",
       "migrations_dir": "migrations"
     }
   ],
