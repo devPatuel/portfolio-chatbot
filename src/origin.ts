@@ -20,3 +20,11 @@ export function corsHeaders(origin: string): Record<string, string> {
     Vary: "Origin",
   };
 }
+
+export function hostnamesOf(origins: string[]): string[] {
+  return origins.map((origin) => new URL(origin).hostname);
+}
+
+export function onlyLocalOrigins(origins: string[]): boolean {
+  return origins.every((origin) => ["localhost", "127.0.0.1"].includes(new URL(origin).hostname));
+}

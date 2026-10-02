@@ -3,7 +3,7 @@ import { cleanup } from "./cleanup";
 import { CONFIG } from "./config";
 import { json } from "./http";
 import { WorkersAiProvider } from "./model";
-import { corsHeaders, isAllowedOrigin, parseAllowedOrigins } from "./origin";
+import { corsHeaders, hostnamesOf, isAllowedOrigin, parseAllowedOrigins } from "./origin";
 import { handleSession } from "./session";
 import { CloudflareTurnstile } from "./turnstile";
 
@@ -25,7 +25,7 @@ export default {
 
     try {
       if (url.pathname === "/session") {
-        return await handleSession(request, env, new CloudflareTurnstile(env.TURNSTILE_SECRET ?? ""), new Date());
+        return await handleSession(request, env, new CloudflareTurnstile(env.TURNSTILE_SECRET ?? "", hostnamesOf(parseAllowedOrigins(env.ALLOWED_ORIGINS))), new Date());
       }
       const model = new WorkersAiProvider(env.AI, CONFIG.model, CONFIG.maxOutputTokens);
       return await handleChat(request, env, model, new Date());

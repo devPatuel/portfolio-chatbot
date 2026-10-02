@@ -21,7 +21,8 @@ export default defineConfig(async () => {
             VISITOR_DAILY_LIMIT: "3",
             GLOBAL_DAILY_LIMIT: "5",
             PASS_SECRET: "test-pass-secret-0123456789abcdef-0123456789",
-            TURNSTILE_SECRET: "1x0000000000000000000000000000000AA",
+            // Not a Cloudflare test secret: with a public origin those are refused. Tests use a fake verifier anyway.
+            TURNSTILE_SECRET: "test-turnstile-secret",
           },
         },
       }),

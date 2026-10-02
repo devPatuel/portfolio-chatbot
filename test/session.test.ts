@@ -97,6 +97,7 @@ describe("handleSession — missing secrets", () => {
     ["PASS_SECRET too short", { PASS_SECRET: "short" }],
     ["TURNSTILE_SECRET missing", { TURNSTILE_SECRET: undefined }],
     ["VISITOR_SALT empty", { VISITOR_SALT: "" }],
+    ["a Turnstile test secret with a public origin", { TURNSTILE_SECRET: "1x0000000000000000000000000000000AA" }],
   ])("answers 500 without calling anyone when %s", async (_name, override) => {
     const verifier = new FakeTurnstile(true);
 
@@ -110,5 +111,18 @@ describe("handleSession — missing secrets", () => {
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: "server_misconfigured" });
     expect(verifier.calls).toHaveLength(0);
+  });
+});
+
+describe("handleSession — local development", () => {
+  it("accepts a Turnstile test secret when every allowed origin is local", async () => {
+    const response = await handleSession(
+      sessionRequest({ turnstileToken: TOKEN }, { Origin: "http://localhost:8788" }),
+      envWith({ TURNSTILE_SECRET: "1x0000000000000000000000000000000AA", ALLOWED_ORIGINS: "http://localhost:8788,http://127.0.0.1:8788" }),
+      new FakeTurnstile(true),
+      freshDay(),
+    );
+
+    expect(response.status).toBe(200);
   });
 });

@@ -2,9 +2,9 @@ import { readJsonBody } from "./body";
 import { CONFIG } from "./config";
 import { json } from "./http";
 import { countMetric, errorMessage } from "./log";
-import { corsHeaders, isAllowedOrigin, parseAllowedOrigins } from "./origin";
+import { corsHeaders, isAllowedOrigin, onlyLocalOrigins, parseAllowedOrigins } from "./origin";
 import { isUsablePassSecret, issuePass } from "./pass";
-import type { TurnstileVerifier } from "./turnstile";
+import { isTestTurnstileSecret, type TurnstileVerifier } from "./turnstile";
 import { dayOf, visitorId } from "./visitor";
 
 function tokenOf(body: unknown): string | null {
@@ -24,7 +24,8 @@ export async function handleSession(
 
   // Origin first: cheaper than anything else and it keeps other sites from solving captchas for us.
   const origin = request.headers.get("Origin");
-  if (!isAllowedOrigin(origin, parseAllowedOrigins(env.ALLOWED_ORIGINS))) {
+  const allowed = parseAllowedOrigins(env.ALLOWED_ORIGINS);
+  if (!isAllowedOrigin(origin, allowed)) {
     await countMetric(env.DB, day, "rejected_origin");
     return json({ error: "forbidden_origin" }, 403);
   }
@@ -33,6 +34,11 @@ export async function handleSession(
   // Fail closed: with a weak or missing secret the passes would be forgeable.
   if (!isUsablePassSecret(env.PASS_SECRET) || !env.TURNSTILE_SECRET || !env.VISITOR_SALT) {
     console.error("missing or unusable secrets");
+    return json({ error: "server_misconfigured" }, 500, cors);
+  }
+  // A test secret lets every token through: it is only acceptable while nothing is public.
+  if (isTestTurnstileSecret(env.TURNSTILE_SECRET) && !onlyLocalOrigins(allowed)) {
+    console.error("turnstile test secret with public origins");
     return json({ error: "server_misconfigured" }, 500, cors);
   }
 
