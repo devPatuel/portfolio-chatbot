@@ -91,8 +91,7 @@ paso 8, o añadiendo temporalmente el origen local a `ALLOWED_ORIGINS`).
 
 Releer `privacidad.html` contra lo desplegado: 30 días de retención, observability activada en
 `wrangler.jsonc`, y D1 Time Travel: Cloudflare guarda el historial de la base de datos 7 días en el plan gratuito,
-así que un borrado tarda hasta 7 días más en desaparecer del todo. `privacidad.html` aún no lo
-dice: añadirlo antes de fusionar.
+así que un borrado tarda hasta 7 días más en desaparecer del todo (`privacidad.html` ya lo dice).
 
 ## 8. 🌐 Fusionar `chat-flotante` a `main` del portfolio
 
