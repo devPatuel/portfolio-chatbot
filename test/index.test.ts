@@ -15,6 +15,12 @@ describe("routing", () => {
     expect(response.status).toBe(404);
   });
 
+  it("marks every JSON answer as not cacheable and not sniffable", async () => {
+    const response = await call("/otra", { method: "GET" });
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  });
+
   it("returns 405 for methods other than POST and OPTIONS", async () => {
     const response = await call("/chat", { method: "GET" });
     expect(response.status).toBe(405);

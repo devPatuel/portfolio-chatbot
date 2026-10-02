@@ -2,6 +2,7 @@ import { handleChat } from "./chat";
 import { cleanup } from "./cleanup";
 import { CONFIG } from "./config";
 import { json } from "./http";
+import { errorMessage } from "./log";
 import { WorkersAiProvider } from "./model";
 import { corsHeaders, hostnamesOf, isAllowedOrigin, parseAllowedOrigins } from "./origin";
 import { handleSession } from "./session";
@@ -31,7 +32,7 @@ export default {
       return await handleChat(request, env, model, new Date());
     } catch (error) {
       // Details go to the logs, never to the caller.
-      console.error("unhandled error", error);
+      console.error("unhandled error", errorMessage(error));
       return json({ error: "internal_error" }, 500);
     }
   },
