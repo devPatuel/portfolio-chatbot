@@ -121,7 +121,7 @@ Hallazgos que quedan, por decidir o aceptados:
 | GitHub Pages no deja poner cabeceras: sin HSTS y sin `frame-ancestors` (la CSP en `<meta>` no admite esa directiva), así que la web se puede incrustar en otra | Bajo (web estática) | Aceptado; se cerraría poniendo Cloudflare delante del dominio |
 | El script de Turnstile no puede llevar SRI porque Cloudflare lo cambia | Bajo | Aceptado: se confía en Cloudflare |
 | `siteverify` no comprueba el campo `action` | Bajo | Opcional |
-| Un plan de `docs/superpowers/` incluye rutas del Mac del autor | Bajo (privacidad) | Por decidir antes del primer push |
+| Un plan de `docs/superpowers/` incluía rutas del Mac del autor | Bajo (privacidad) | Resuelto: historial reescrito el 2/10 |
 | Historial enviado por el cliente: un atacante puede inventar respuestas de `assistant` | Bajo (0/5 en `historial-falso`) | Aceptado; lo frena la regla 7 |
 | Puntos 1, 2, 4, 5, 6 y 8 de la sección 3 | Ver sección 3 | Conocidos |
 
