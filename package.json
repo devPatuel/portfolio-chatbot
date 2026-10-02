@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "test": "vitest run",
     "typecheck": "wrangler types && tsc -p tsconfig.json && tsc -p test/tsconfig.json",
-    "evals": "node evals/run.mjs"
+    "evals": "node evals/run.mjs",
+    "conversaciones": "node scripts/conversaciones.mjs"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.3.4",

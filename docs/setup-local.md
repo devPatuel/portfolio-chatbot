@@ -74,6 +74,16 @@ Escribe `evals/results/<etiqueta>.md` con 5 intentos por ataque de `evals/attack
 1. Antes: sube `VISITOR_DAILY_LIMIT` y `GLOBAL_DAILY_LIMIT` a 1000 en `.dev.vars` y reinicia `npm run dev`.
 2. Después: devuélvelos a 20 y 100.
 
+## Ver las conversaciones
+
+```bash
+npm run conversaciones                          # hoy, en local
+npm run conversaciones -- --dia 2026-10-01 --tipo canary
+npm run conversaciones -- --remote              # producción, cuando esté publicada
+```
+
+Muestra las métricas del día y los mensajes agrupados por conversación (horas en UTC).
+
 ## Consultas útiles de D1 (local)
 
 ```bash
