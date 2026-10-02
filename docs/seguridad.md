@@ -69,7 +69,7 @@ Orden de `/chat`: origen, secretos, pase, cuerpo, límites, modelo. El pase est�
 5. **Un fallo del modelo consume cupo.** Una respuesta fallida o vacía (502) descuenta uno de los mensajes diarios del visitante, porque el contador sube antes de llamar al modelo.
 6. **Señuelo repartido.** Si el modelo emite el señuelo partido en varios mensajes o entremezclado con otras palabras, el filtro de salida no lo detecta, porque solo busca en la respuesta completa normalizada.
 7. **IPv6 (resuelto).** El identificador del visitante hasheaba la IP completa, así que quien tiene IPv6 controlaba un /64 entero y obtenía un cupo nuevo cambiando de dirección. Ahora `networkKey` usa el prefijo /64 (IPv4 entera; `::ffff:a.b.c.d` se trata como IPv4). Límite: la forma mapeada en hexadecimal (`::ffff:c0a8:0101`) no se interpreta como IPv4; Cloudflare entrega IPv4 con puntos.
-8. **Cada petición sin pase válido escribe en D1.** `rejected_pass` se cuenta antes de cualquier límite, así que un atacante puede gastar la cuota de escrituras de D1 sin pase. Los límites del plan gratuito de D1 no están verificados aquí; se revisan al publicar (Plan 3).
+8. **Cada petición sin pase válido escribe en D1** (mitigado: el límite de ráfagas `BURST_LIMITER` corta antes, a 15 cada 10 s por red). `rejected_pass` se cuenta antes de cualquier límite, así que un atacante puede gastar la cuota de escrituras de D1 sin pase. Los límites del plan gratuito de D1 no están verificados aquí; se revisan al publicar (Plan 3).
 9. ~~**Turnstile sin tiempo máximo.**~~ Cerrado: `siteverify` tiene un timeout de 5 s y, si vence, falla cerrado (503).
 10. ~~**`unhandled error`.**~~ Cerrado: `index.ts` registra solo el mensaje del error (`errorMessage`), como el resto.
 11. **Turnstile real en el panel.** Con una clave real, Turnstile puede pedir un reto visible dentro del panel; cerrar el panel lo oculta y el reto caduca a los 30 s. Con las claves de prueba (invisibles) no se ha podido ver.
@@ -117,7 +117,7 @@ Hallazgos que quedan, por decidir o aceptados:
 
 | Hallazgo | Riesgo | Estado |
 |---|---|---|
-| `/session` sin límite propio y escrituras a D1 sin pase | Medio en producción | Regla de límite del WAF (runbook, paso 6) |
+| `/session` sin límite propio y escrituras a D1 sin pase | Medio en producción | Resuelto: `BURST_LIMITER` en `index.ts`, 15 peticiones cada 10 s por red, antes de todo (en `workers.dev` no hay WAF) |
 | GitHub Pages no deja poner cabeceras: sin HSTS y sin `frame-ancestors` (la CSP en `<meta>` no admite esa directiva), así que la web se puede incrustar en otra | Bajo (web estática) | Aceptado; se cerraría poniendo Cloudflare delante del dominio |
 | El script de Turnstile no puede llevar SRI porque Cloudflare lo cambia | Bajo | Aceptado: se confía en Cloudflare |
 | `siteverify` no comprueba el campo `action` | Bajo | Opcional |

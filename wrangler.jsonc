@@ -19,6 +19,11 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Burst limit per network, checked at the door before any handler, D1 write or captcha call.
+  // Free on every plan; approximate by design (counted per Cloudflare location).
+  "ratelimits": [
+    { "name": "BURST_LIMITER", "namespace_id": "1001", "simple": { "limit": 15, "period": 10 } }
+  ],
   "triggers": {
     // Daily cleanup at 03:00 UTC.
     "crons": ["0 3 * * *"]

@@ -66,13 +66,19 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST "$URL/chat" -H "Origin: https:/
 curl -s -o /dev/null -w "%{http_code}\n" -X POST "$URL/chat" -H "Origin: https://jordipatuel.com"  # 401 (sin pase)
 ```
 
-## 6. Límite de peticiones en el WAF
+## 6. Límite de ráfagas
 
-Panel → el dominio → Security → WAF → Rate limiting rules (el plan gratuito incluye una regla).
-Si el Worker va por `workers.dev`, la regla no le aplica: entonces conviene una ruta propia
-(`chat.jordipatuel.com`) para que el WAF la vea. Regla: rutas `/chat` y `/session`, por IP,
-p. ej. 30 peticiones cada 10 s → bloquear 10 s. Cubre las escrituras gratuitas a D1 de
-`rejected_pass`, `rejected_origin` y `captcha_failed`, y el abuso de `/session`.
+Ya va en el código: `BURST_LIMITER` (`wrangler.jsonc`) corta a 15 peticiones cada 10 s por red, en
+`index.ts`, antes de cualquier escritura en D1, llamada a Turnstile o al modelo. Se despliega con el
+Worker; no hay que configurar nada en el panel. Comprobarlo tras desplegar:
+
+```bash
+for i in $(seq 1 20); do curl -s -o /dev/null -w "%{http_code} " -X POST "$URL/session" -H "Origin: https://jordipatuel.com"; done; echo
+# las primeras dan 400 (cuerpo vacío) y a partir de la 16 dan 429
+```
+
+Una regla del WAF solo sería posible si el Worker pasara a una ruta de un dominio gestionado por
+Cloudflare (`chat.jordipatuel.com`); en `workers.dev` no hay WAF.
 
 ## 7. Widget del portfolio (rama `chat-flotante`)
 

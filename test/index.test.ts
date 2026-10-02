@@ -83,3 +83,23 @@ describe("routing", () => {
     expect(await response.text()).toBe('{"error":"internal_error"}');
   });
 });
+
+describe("burst limit per network", () => {
+  // Cheap filter at the door: a burst is cut before any handler, any D1 write or any captcha call.
+  it("answers 429 once a network sends more than 15 requests in 10 seconds", async () => {
+    const send = () =>
+      call("/session", {
+        method: "POST",
+        headers: { Origin: ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100.99" },
+        body: "{}",
+      });
+    const statuses: number[] = [];
+    for (let i = 0; i < 16; i++) statuses.push((await send()).status);
+
+    expect(statuses.slice(0, 15).every((status) => status !== 429)).toBe(true);
+    const blocked = await send();
+    expect(blocked.status).toBe(429);
+    expect(await blocked.json()).toEqual({ error: "too_many_requests" });
+    expect(blocked.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+  });
+});

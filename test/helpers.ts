@@ -53,6 +53,7 @@ export function envWith(override: Partial<Env>): Env {
   return {
     AI: env.AI,
     DB: env.DB,
+    BURST_LIMITER: env.BURST_LIMITER,
     CANARY: env.CANARY,
     VISITOR_SALT: env.VISITOR_SALT,
     ALLOWED_ORIGINS: env.ALLOWED_ORIGINS,

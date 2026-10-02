@@ -54,6 +54,7 @@ El backend no guarda el historial: el cliente lo reenvía en cada mensaje y se t
 
 | Paso | Qué hace | Si falla |
 |---|---|---|
+| 0. Ráfagas (en `index.ts`, para `/chat` y `/session`) | Como mucho 15 peticiones cada 10 s por red (binding `BURST_LIMITER`, aproximado por centro de datos). | 429 `too_many_requests`, sin tocar D1 |
 | 1. Origen | La cabecera `Origin` debe estar en `ALLOWED_ORIGINS`. | 403 `forbidden_origin` |
 | (secretos) | `CANARY` utilizable (al menos 12 caracteres alfanuméricos), `VISITOR_SALT` presente y `PASS_SECRET` de al menos 32 caracteres. | 500 `server_misconfigured` |
 | 2. Pase | `Authorization: Bearer <pase>`: firma válida, no caducado y atado al visitante que llama (se recalcula su identificador). Va antes de leer el cuerpo y de gastar cupo. | 401 `invalid_pass` (cuenta `rejected_pass`) |

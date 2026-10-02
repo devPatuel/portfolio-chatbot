@@ -7,6 +7,7 @@ import { WorkersAiProvider } from "./model";
 import { corsHeaders, hostnamesOf, isAllowedOrigin, parseAllowedOrigins } from "./origin";
 import { handleSession } from "./session";
 import { CloudflareTurnstile } from "./turnstile";
+import { networkKey } from "./visitor";
 
 export default {
   async fetch(request, env): Promise<Response> {
@@ -25,6 +26,16 @@ export default {
     if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
     try {
+      // Burst limit before anything else: a flood never reaches D1, Turnstile or the model.
+      // Keyed like the daily limit, so a whole IPv6 /64 shares one counter.
+      const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
+      const { success } = await env.BURST_LIMITER.limit({ key: networkKey(ip) });
+      if (!success) {
+        const origin = request.headers.get("Origin");
+        const cors = isAllowedOrigin(origin, parseAllowedOrigins(env.ALLOWED_ORIGINS)) ? corsHeaders(origin) : {};
+        return json({ error: "too_many_requests" }, 429, cors);
+      }
+
       if (url.pathname === "/session") {
         return await handleSession(request, env, new CloudflareTurnstile(env.TURNSTILE_SECRET ?? "", hostnamesOf(parseAllowedOrigins(env.ALLOWED_ORIGINS))), new Date());
       }
