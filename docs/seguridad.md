@@ -125,4 +125,6 @@ Hallazgos que quedan, por decidir o aceptados:
 | Historial enviado por el cliente: un atacante puede inventar respuestas de `assistant` | Bajo (0/5 en `historial-falso`) | Aceptado; lo frena la regla 7 |
 | Puntos 1, 2, 4, 5, 6 y 8 de la sección 3 | Ver sección 3 | Conocidos |
 
+Límite de ráfagas medido en producción (2/10): 60 peticiones en paralelo desde una IP, 13 recibieron 429 y 47 pasaron. Es un filtro grueso por centro de datos, como avisa Cloudflare; el control exacto son los límites diarios de D1.
+
 Gasto: el plan gratuito de Workers, D1 y Workers AI corta al llegar a su cuota en vez de cobrar, así que el abuso acaba en errores, no en factura. Se pierde esa red si la cuenta pasa a un plan de pago.
