@@ -106,3 +106,23 @@ Para la publicación (Plan 3):
 Cerrado antes de publicar: `AbortSignal.timeout(5000)` en el `fetch` de `siteverify` (si vence, el visitante recibe 503 y no hay pase); `hostname` de `siteverify` comprobado contra los orígenes permitidos (un token resuelto en otra página no compra un pase); y `/session` responde 500 si `TURNSTILE_SECRET` es un secreto de prueba (`1x…`, `2x…`, `3x…`) y algún origen permitido no es `localhost`/`127.0.0.1`.
 
 Cerrado en el Plan 2: HTML o Markdown en la respuesta (el widget pinta con `textContent`, con prueba estática que prohíbe `innerHTML` y similares), aviso de privacidad antes del primer mensaje, e historial de más de 20 entradas (el widget envía solo las últimas 20, pares completos empezando por `user`).
+
+## 5. Auditoría del 2 de octubre de 2026 (antes de publicar)
+
+Revisión de los dos repos (backend y portfolio) con comprobaciones reales: `gitleaks` en archivos e historial, `npm audit`, búsqueda de datos internos y personales en lo versionado, metadatos de imágenes y PDFs, enlaces externos, redirección a HTTPS y lectura del código de pase, cuerpo, validación, límites, registro y respuestas.
+
+Corregido en la auditoría: respuestas con `Cache-Control: no-store` y `X-Content-Type-Options: nosniff`, el error no controlado se registra solo con su mensaje (punto 10) y `.superpowers/` en `.gitignore`.
+
+Hallazgos que quedan, por decidir o aceptados:
+
+| Hallazgo | Riesgo | Estado |
+|---|---|---|
+| `/session` sin límite propio y escrituras a D1 sin pase | Medio en producción | Regla de límite del WAF (runbook, paso 6) |
+| GitHub Pages no deja poner cabeceras: sin HSTS y sin `frame-ancestors` (la CSP en `<meta>` no admite esa directiva), así que la web se puede incrustar en otra | Bajo (web estática) | Aceptado; se cerraría poniendo Cloudflare delante del dominio |
+| El script de Turnstile no puede llevar SRI porque Cloudflare lo cambia | Bajo | Aceptado: se confía en Cloudflare |
+| `siteverify` no comprueba el campo `action` | Bajo | Opcional |
+| Un plan de `docs/superpowers/` incluye rutas del Mac del autor | Bajo (privacidad) | Por decidir antes del primer push |
+| Historial enviado por el cliente: un atacante puede inventar respuestas de `assistant` | Bajo (0/5 en `historial-falso`) | Aceptado; lo frena la regla 7 |
+| Puntos 1, 2, 4, 5, 6 y 8 de la sección 3 | Ver sección 3 | Conocidos |
+
+Gasto: el plan gratuito de Workers, D1 y Workers AI corta al llegar a su cuota en vez de cobrar, así que el abuso acaba en errores, no en factura. Se pierde esa red si la cuenta pasa a un plan de pago.
