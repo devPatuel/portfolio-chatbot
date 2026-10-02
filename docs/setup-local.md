@@ -84,6 +84,10 @@ npm run conversaciones -- --remote              # producción, cuando esté publ
 
 Muestra las métricas del día y los mensajes agrupados por conversación (horas en UTC).
 
+## Ver las neuronas gastadas
+
+Panel de Cloudflare → **AI → Workers AI → Usage** (`dash.cloudflare.com/<cuenta>/ai/workers-ai/usage`): «Neurons used today: X/10k». Es la cuota gratuita diaria, se reinicia a las 00:00 UTC y el panel tarda unos minutos en reflejar las llamadas. Es la misma cuota en local y en producción.
+
 ## Consultas útiles de D1 (local)
 
 ```bash
