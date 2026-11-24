@@ -12,5 +12,6 @@ export const CONFIG = {
   maxOutputTokens: 400,
   exchangeRetentionDays: 30,
   model: "@cf/google/gemma-4-26b-a4b-it",
+  modelThinking: false,
   refusalText: "Soy Patu y solo puedo responder preguntas sobre el perfil profesional de Jordi.",
 } as const;

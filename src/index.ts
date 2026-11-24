@@ -39,7 +39,7 @@ export default {
       if (url.pathname === "/session") {
         return await handleSession(request, env, new CloudflareTurnstile(env.TURNSTILE_SECRET ?? "", hostnamesOf(parseAllowedOrigins(env.ALLOWED_ORIGINS))), new Date());
       }
-      const model = new WorkersAiProvider(env.AI, CONFIG.model, CONFIG.maxOutputTokens);
+      const model = new WorkersAiProvider(env.AI, CONFIG.model, CONFIG.maxOutputTokens, CONFIG.modelThinking);
       return await handleChat(request, env, model, new Date());
     } catch (error) {
       // Details go to the logs, never to the caller.

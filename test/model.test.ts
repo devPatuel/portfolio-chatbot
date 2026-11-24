@@ -31,6 +31,15 @@ describe("WorkersAiProvider", () => {
     });
   });
 
+  it("turns reasoning off when asked, so the token budget goes to the reply", async () => {
+    const { ai, calls } = fakeAi({ response: "Hola" });
+    const provider = new WorkersAiProvider(ai, "test-model", 400, false);
+
+    await provider.generate("RULES", []);
+
+    expect(calls[0].input).toMatchObject({ chat_template_kwargs: { enable_thinking: false } });
+  });
+
   it("returns the trimmed reply", async () => {
     const { ai } = fakeAi({ response: "  Hola  \n" });
     const provider = new WorkersAiProvider(ai, "test-model", 400);
