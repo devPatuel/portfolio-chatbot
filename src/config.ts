@@ -11,6 +11,6 @@ export const CONFIG = {
   globalDailyLimit: 100,
   maxOutputTokens: 400,
   exchangeRetentionDays: 30,
-  model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+  model: "@cf/google/gemma-4-26b-a4b-it",
   refusalText: "Soy Patu y solo puedo responder preguntas sobre el perfil profesional de Jordi.",
 } as const;

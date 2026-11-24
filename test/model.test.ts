@@ -38,7 +38,14 @@ describe("WorkersAiProvider", () => {
     expect(await provider.generate("RULES", [])).toBe("Hola");
   });
 
-  it.each([{ response: "" }, { response: "   " }, {}])("throws when the model returns no text: %j", async (response) => {
+  it("reads the OpenAI-style reply used by newer models", async () => {
+    const { ai } = fakeAi({ choices: [{ message: { role: "assistant", content: "  Hola  " } }] });
+    const provider = new WorkersAiProvider(ai, "test-model", 400);
+
+    expect(await provider.generate("RULES", [])).toBe("Hola");
+  });
+
+  it.each([{ response: "" }, { response: "   " }, {}, { choices: [] }, { choices: [{ message: { content: null } }] }])("throws when the model returns no text: %j", async (response) => {
     const { ai } = fakeAi(response);
     const provider = new WorkersAiProvider(ai, "test-model", 400);
 

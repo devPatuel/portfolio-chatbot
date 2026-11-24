@@ -9,7 +9,7 @@ El objetivo real era aprender a construir un chatbot **seguro**, así que se hiz
 Un Worker de Cloudflare con dos rutas:
 
 - `POST /session`: comprueba el captcha (Turnstile) en el servidor y entrega un pase firmado con HMAC, de 30 minutos y atado al visitante.
-- `POST /chat`: siete pasos en orden, de lo barato a lo caro: origen, pase, validación, límites diarios, modelo (Llama 3.1 8B en Workers AI), filtro de salida con señuelo y registro en D1.
+- `POST /chat`: siete pasos en orden, de lo barato a lo caro: origen, pase, validación, límites diarios, modelo (Gemma 4 26B en Workers AI), filtro de salida con señuelo y registro en D1.
 
 Antes de todo, un límite de ráfagas por red corta los abusos sin tocar la base de datos. El widget del chat vive en el [repo del portfolio](https://github.com/devPatuel/devPatuel.github.io).
 

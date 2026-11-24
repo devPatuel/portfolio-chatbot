@@ -7,7 +7,10 @@ export interface ModelProvider {
 type RunChat = (
   model: string,
   input: { messages: { role: string; content: string }[]; max_tokens: number },
-) => Promise<{ response?: string }>;
+) => Promise<{
+  response?: string;
+  choices?: { message?: { content?: string | null } }[];
+}>;
 
 export class WorkersAiProvider implements ModelProvider {
   constructor(
@@ -23,7 +26,8 @@ export class WorkersAiProvider implements ModelProvider {
       messages: [{ role: "system", content: system }, ...messages],
       max_tokens: this.maxTokens,
     });
-    const text = result.response?.trim();
+    // Older models answer with `response`; newer ones (Gemma 4, Qwen 3.x) use the OpenAI shape.
+    const text = (result.response ?? result.choices?.[0]?.message?.content)?.trim();
     if (!text) throw new Error("empty model response");
     return text;
   }
